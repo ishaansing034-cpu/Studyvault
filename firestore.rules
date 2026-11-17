@@ -1,0 +1,304 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+             data.hindiCourse in ['COURSE_A', 'COURSE_B'] &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 200)) &&
+             (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() <= 500)) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidNote(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+             data.description is string && data.description.size() <= 600 &&
+             data.content is string && data.content.size() <= 50000 &&
+             data.subjectId is string && data.subjectId.size() >= 1 && data.subjectId.size() <= 80 &&
+             data.subjectName is string && data.subjectName.size() >= 1 && data.subjectName.size() <= 80 &&
+             data.sectionName is string && data.sectionName.size() <= 80 &&
+             data.chapterName is string && data.chapterName.size() >= 1 && data.chapterName.size() <= 160 &&
+             data.noteType in ['NOTES', 'FORMULA', 'DEFINITION', 'FIVE_MARK_QA', 'IMPORTANT_QA'] &&
+             data.tags is list && data.tags.size() <= 15 && (data.tags.size() == 0 || data.tags[0] is string) &&
+             data.attachments is list && data.attachments.size() <= 10 && (data.attachments.size() == 0 || data.attachments[0] is map) &&
+             data.pinned is bool &&
+             data.favourite is bool &&
+             data.bookmarked is bool &&
+             (!('aiTopic' in data) || (data.aiTopic is string && data.aiTopic.size() <= 200)) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidCustomSubject(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.sections is list && data.sections.size() <= 10 && (data.sections.size() == 0 || data.sections[0] is string) &&
+             data.colorHex is string && data.colorHex.size() >= 4 && data.colorHex.size() <= 12 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidCustomChapter(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.subjectId is string && data.subjectId.size() >= 1 && data.subjectId.size() <= 80 &&
+             data.sectionName is string && data.sectionName.size() <= 80 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 160 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidChapterProgress(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.subjectId is string && data.subjectId.size() >= 1 && data.subjectId.size() <= 80 &&
+             data.sectionName is string && data.sectionName.size() <= 80 &&
+             data.chapterName is string && data.chapterName.size() >= 1 && data.chapterName.size() <= 160 &&
+             data.completed is bool &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidFlashcard(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.subjectName is string && data.subjectName.size() >= 1 && data.subjectName.size() <= 80 &&
+             data.chapterName is string && data.chapterName.size() >= 1 && data.chapterName.size() <= 160 &&
+             data.question is string && data.question.size() >= 1 && data.question.size() <= 1000 &&
+             data.answer is string && data.answer.size() >= 1 && data.answer.size() <= 3000 &&
+             data.mastered is bool &&
+             (!('noteId' in data) || (data.noteId is string && data.noteId.size() <= 128)) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidRevisionQuestion(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.subjectName is string && data.subjectName.size() >= 1 && data.subjectName.size() <= 80 &&
+             data.chapterName is string && data.chapterName.size() >= 1 && data.chapterName.size() <= 160 &&
+             data.marks is int && data.marks >= 1 && data.marks <= 10 &&
+             data.question is string && data.question.size() >= 1 && data.question.size() <= 1000 &&
+             data.answer is string && data.answer.size() >= 1 && data.answer.size() <= 4000 &&
+             (!('noteId' in data) || (data.noteId is string && data.noteId.size() <= 128)) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidQuizAttempt(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.subjectName is string && data.subjectName.size() >= 1 && data.subjectName.size() <= 80 &&
+             data.chapterName is string && data.chapterName.size() >= 1 && data.chapterName.size() <= 160 &&
+             data.score is int && data.score >= 0 && data.score <= 100 &&
+             data.totalQuestions is int && data.totalQuestions >= 1 && data.totalQuestions <= 100 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'hindiCourse', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'photoUrl', 'hindiCourse', 'createdAt', 'updatedAt']) &&
+                       isValidUserProfile(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'photoUrl', 'hindiCourse', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /notes/{noteId} {
+        allow get: if isOwner(userId) && isValidId(noteId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(noteId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'title', 'description', 'content',
+                           'subjectId', 'subjectName', 'sectionName', 'chapterName',
+                           'noteType', 'tags', 'attachments',
+                           'pinned', 'favourite', 'bookmarked',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'title', 'description', 'content',
+                           'subjectId', 'subjectName', 'sectionName', 'chapterName',
+                           'noteType', 'tags', 'attachments',
+                           'pinned', 'favourite', 'bookmarked', 'aiTopic',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidNote(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(noteId) &&
+                         isValidNote(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'description', 'content',
+                           'subjectId', 'subjectName', 'sectionName', 'chapterName',
+                           'noteType', 'tags', 'attachments',
+                           'pinned', 'favourite', 'bookmarked', 'aiTopic',
+                           'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(noteId);
+      }
+
+      match /customSubjects/{subjectId} {
+        allow get: if isOwner(userId) && isValidId(subjectId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(subjectId) &&
+                         incoming().keys().hasAll(['userId', 'name', 'sections', 'colorHex', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'name', 'sections', 'colorHex', 'createdAt', 'updatedAt']) &&
+                         isValidCustomSubject(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(subjectId) &&
+                         isValidCustomSubject(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'sections', 'colorHex', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(subjectId);
+      }
+
+      match /customChapters/{chapterId} {
+        allow get: if isOwner(userId) && isValidId(chapterId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(chapterId) &&
+                         incoming().keys().hasAll(['userId', 'subjectId', 'sectionName', 'name', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'subjectId', 'sectionName', 'name', 'createdAt', 'updatedAt']) &&
+                         isValidCustomChapter(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(chapterId) &&
+                         isValidCustomChapter(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['subjectId', 'sectionName', 'name', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(chapterId);
+      }
+
+      match /chapterProgress/{progressId} {
+        allow get: if isOwner(userId) && isValidId(progressId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(progressId) &&
+                         incoming().keys().hasAll(['userId', 'subjectId', 'sectionName', 'chapterName', 'completed', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'subjectId', 'sectionName', 'chapterName', 'completed', 'createdAt', 'updatedAt']) &&
+                         isValidChapterProgress(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(progressId) &&
+                         isValidChapterProgress(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(progressId);
+      }
+
+      match /flashcards/{cardId} {
+        allow get: if isOwner(userId) && isValidId(cardId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(cardId) &&
+                         incoming().keys().hasAll(['userId', 'subjectName', 'chapterName', 'question', 'answer', 'mastered', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'subjectName', 'chapterName', 'question', 'answer', 'mastered', 'noteId', 'createdAt', 'updatedAt']) &&
+                         isValidFlashcard(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(cardId) &&
+                         isValidFlashcard(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['subjectName', 'chapterName', 'question', 'answer', 'mastered', 'noteId', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(cardId);
+      }
+
+      match /revisionQuestions/{questionId} {
+        allow get: if isOwner(userId) && isValidId(questionId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(questionId) &&
+                         incoming().keys().hasAll(['userId', 'subjectName', 'chapterName', 'marks', 'question', 'answer', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'subjectName', 'chapterName', 'marks', 'question', 'answer', 'noteId', 'createdAt', 'updatedAt']) &&
+                         isValidRevisionQuestion(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(questionId) &&
+                         isValidRevisionQuestion(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['subjectName', 'chapterName', 'marks', 'question', 'answer', 'noteId', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(questionId);
+      }
+
+      match /quizAttempts/{attemptId} {
+        allow get: if isOwner(userId) && isValidId(attemptId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(attemptId) &&
+                         incoming().keys().hasAll(['userId', 'subjectName', 'chapterName', 'score', 'totalQuestions', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'subjectName', 'chapterName', 'score', 'totalQuestions', 'createdAt', 'updatedAt']) &&
+                         isValidQuizAttempt(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(attemptId) &&
+                         isValidQuizAttempt(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['score', 'totalQuestions', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(attemptId);
+      }
+    }
+  }
+}

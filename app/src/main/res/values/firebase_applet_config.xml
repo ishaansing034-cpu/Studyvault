@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="firestore_database_id" translatable="false">ai-studio-android-studyvau-6e7180f5-cb0d-48d4-8fda-a524f7bf01ec</string>
+    <string name="recaptcha_site_key" translatable="false">6LcnSyQuAAAAAHWH_2js5V1M29tgM22hWlhIUdaX</string>
+</resources>

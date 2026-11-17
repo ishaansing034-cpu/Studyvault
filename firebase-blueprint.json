@@ -1,0 +1,183 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private profile and curriculum settings for a StudyVault student.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "displayName": { "type": "string", "description": "Student display name." },
+        "email": { "type": "string", "description": "Student email address (PII, owner-only)." },
+        "photoUrl": { "type": "string", "description": "Optional avatar URL." },
+        "hindiCourse": {
+          "type": "string",
+          "enum": ["COURSE_A", "COURSE_B"],
+          "description": "Selected CBSE Class 10 Hindi curriculum track."
+        },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update." }
+      },
+      "required": ["userId", "displayName", "hindiCourse", "createdAt", "updatedAt"]
+    },
+    "StudyNote": {
+      "title": "StudyNote",
+      "description": "A CBSE Class 10 study note with rich text, metadata, and file attachment references.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "content": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "subjectName": { "type": "string" },
+        "sectionName": { "type": "string" },
+        "chapterName": { "type": "string" },
+        "noteType": {
+          "type": "string",
+          "enum": ["NOTES", "FORMULA", "DEFINITION", "FIVE_MARK_QA", "IMPORTANT_QA"]
+        },
+        "tags": { "type": "array", "description": "Up to 15 string tags." },
+        "attachments": { "type": "array", "description": "Up to 10 local file attachment descriptors." },
+        "pinned": { "type": "boolean" },
+        "favourite": { "type": "boolean" },
+        "bookmarked": { "type": "boolean" },
+        "aiTopic": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "title", "description", "content",
+        "subjectId", "subjectName", "sectionName", "chapterName",
+        "noteType", "tags", "attachments",
+        "pinned", "favourite", "bookmarked",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "CustomSubject": {
+      "title": "CustomSubject",
+      "description": "Student-created custom subject beyond the 5 core CBSE subjects.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "sections": { "type": "array" },
+        "colorHex": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "sections", "colorHex", "createdAt", "updatedAt"]
+    },
+    "CustomChapter": {
+      "title": "CustomChapter",
+      "description": "Student-created custom chapter inside any subject and section.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "sectionName": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subjectId", "sectionName", "name", "createdAt", "updatedAt"]
+    },
+    "ChapterProgress": {
+      "title": "ChapterProgress",
+      "description": "Completion status of a CBSE Class 10 or custom chapter.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "sectionName": { "type": "string" },
+        "chapterName": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subjectId", "sectionName", "chapterName", "completed", "createdAt", "updatedAt"]
+    },
+    "FlashcardItem": {
+      "title": "FlashcardItem",
+      "description": "Study flashcard for active recall in Revision Center.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "subjectName": { "type": "string" },
+        "chapterName": { "type": "string" },
+        "question": { "type": "string" },
+        "answer": { "type": "string" },
+        "mastered": { "type": "boolean" },
+        "noteId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subjectName", "chapterName", "question", "answer", "mastered", "createdAt", "updatedAt"]
+    },
+    "RevisionQuestion": {
+      "title": "RevisionQuestion",
+      "description": "Important 2/3/5-mark board exam question saved to Revision Center.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "subjectName": { "type": "string" },
+        "chapterName": { "type": "string" },
+        "marks": { "type": "integer" },
+        "question": { "type": "string" },
+        "answer": { "type": "string" },
+        "noteId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subjectName", "chapterName", "marks", "question", "answer", "createdAt", "updatedAt"]
+    },
+    "QuizAttempt": {
+      "title": "QuizAttempt",
+      "description": "Completed MCQ practice quiz score record.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "subjectName": { "type": "string" },
+        "chapterName": { "type": "string" },
+        "score": { "type": "integer" },
+        "totalQuestions": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subjectName", "chapterName", "score", "totalQuestions", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Owner-isolated student profile and curriculum preference."
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/StudyNote" },
+      "description": "Private collection of CBSE Class 10 study notes."
+    },
+    "/users/{userId}/customSubjects/{subjectId}": {
+      "schema": { "$ref": "#/entities/CustomSubject" },
+      "description": "Student-defined custom subjects."
+    },
+    "/users/{userId}/customChapters/{chapterId}": {
+      "schema": { "$ref": "#/entities/CustomChapter" },
+      "description": "Student-defined custom chapters."
+    },
+    "/users/{userId}/chapterProgress/{progressId}": {
+      "schema": { "$ref": "#/entities/ChapterProgress" },
+      "description": "Chapter completion tracker documents."
+    },
+    "/users/{userId}/flashcards/{cardId}": {
+      "schema": { "$ref": "#/entities/FlashcardItem" },
+      "description": "Saved and AI-generated flashcards."
+    },
+    "/users/{userId}/revisionQuestions/{questionId}": {
+      "schema": { "$ref": "#/entities/RevisionQuestion" },
+      "description": "Saved important exam questions."
+    },
+    "/users/{userId}/quizAttempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/QuizAttempt" },
+      "description": "Practice quiz score records."
+    }
+  }
+}
